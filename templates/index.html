@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 REAL TIME PRICE PREDICTION</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d0400 0%, #030007 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgb(67, 88, 69);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(199, 188, 188, 0.2);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #f4f436 0%, #f01010 100%);
+            color: rgb(8, 8, 245);
+            padding: 30px 20px;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        input, button {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input {
+            flex: 1;
+            min-width: 200px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #ef0673;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2e07f1;
+        }
+        .info-box {
+            background: #f0f7ff;
+            border-left: 4px solid #f6d70c;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        .info-box.error {
+            background: #ffe0e0;
+            border-left-color: #ff6b6b;
+            color: #c92a2a;
+        }
+        .info-box p {
+            margin: 5px 0;
+            color: #333;
+        }
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .company-info {
+            background: linear-gradient(135deg, #e3df0a 0%, #06e78d 100%);
+            color: rgba(3, 14, 13, 0.774);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(232, 73, 73, 0.1); 
+            margin-bottom: 20px;
+        }
+        .company-info h2 {
+            font-size: 32px;    
+            margin-bottom: 15px;
+            border-bottom: 2px solid rgba(150, 2, 190, 0.3);
+            padding-bottom: 10px;
+        }
+        .company-details {
+            background: rgb(238, 240, 241);
+            color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 4px solid #d1dadc;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .detail-item {
+            padding: 15px;
+            background: #15e5e5;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .company-details h3 {
+            color: #133bee;
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .company-details p {
+            margin: 0;
+            line-height: 1.6;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .chart-section {
+            background: rgb(237, 233, 233);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+        .chart-card {
+            background: rgb(253, 253, 252);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 4px solid #897e85;
+        }
+        .chart-card h3 {
+            color: #59f505;
+            margin-bottom: 15px;    
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .chart-card canvas {
+            max-height: 350px;
+        }
+        .watchlist-section {
+            background: rgb(208, 199, 199);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            margin-top: 20px;
+        }
+        .watchlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .watchlist-header h3 {
+            margin: 0;
+            color: #530eea;
+            font-size: 20px;
+        }
+        .watchlist-controls-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .watchlist-table-wrapper {
+            overflow-x: auto;
+        }
+        .watchlist-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+        .watchlist-table th,
+        .watchlist-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #eff185;
+            text-align: left;
+            color: #333;
+            font-size: 14px;
+        }
+        .watchlist-table th {
+            background: #fcfcfc;
+            color: #1c1c1c;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            font-size: 12px;
+        }
+        .watchlist-table tbody tr:hover {
+            background: #c1c6cd;
+        }
+        .watchlist-table button {
+            padding: 8px 12px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .company-info p {
+            margin: 6px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .detail-item p {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+        .detail-item {
+            min-height: 110px;
+        }
+        .controls button,
+        .watchlist-controls-row button {
+            min-width: 135px;
+        }
+        .controls input,
+        .watchlist-controls-row input {
+            min-width: 240px;
+        }
+        .company-details {
+            margin-bottom: 25px;
+        }
+        .status-indicator.active {
+            background: #22c55e;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f0eded;
+            margin-right: 5px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: #e7f06c;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #16030f;
+            text-align: center;
+        }
+        .stat-card h3 {
+            color: #101111;
+            font-size: 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .stat-card p {
+            font-size: 18px;
+            font-weight: bold;
+            color: #6d0ced;
+        }
+        .wishlist-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ce1111;
+            margin-right: 5px;
+        }
+        .status-indicator.active {
+            background: #edf515;
+        }
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 REAL TIME PRICE PREDICTION</h1>
+        
+        </header>
+        
+        <div class="content">
+            <div class="controls">
+                <input type="text" id="stockSymbol" placeholder="Search stocks (e.g., TCS, INFY, RELIANCE)..." list="stockList" onchange="fetchData()" value="TCS.NS">
+                <datalist id="stockList"></datalist>
+                <button onclick="fetchData()">🔄 Refresh</button>
+                <button onclick="toggleAutoRefresh()">⏰ Auto Refresh</button>
+                <button onclick="toggleRealTimeMode(event)">⚡ Real-Time Mode</button>
+               
+            </div>
+
+            <div id="infoBox" class="info-box"></div>
+
+            <div class="main-layout">
+                <!-- LEFT PANEL: Company Information -->
+                <div class="left-panel">
+                    <div class="company-info">
+                        <h2 id="corporateName">TCS</h2>
+                        <p id="companyTimestamp">Date/Time: --</p>
+                        <p id="watchlistStatus">Watchlist: Not added</p>
+                    </div>
+
+                    <div class="company-details">
+                        <div class="detail-item">
+                            <h3>Corporate Name</h3>
+                            <p id="detailCorporateName">TCS</p>
+                        </div>
+                        <div class="detail-item">
+                            <h3>Current Price</h3>
+                            <p id="detailCurrentPrice">₹ --</p>
+                        </div>
+                        <div class="detail-item">
+                            <h3>Date / Time</h3>
+                            <p id="detailDateTime">--</p>
+                        </div>
+                        <div class="detail-item">
+                            <h3>Watchlist Status</h3>
+                            <p id="detailWatchlist">Inactive</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL: Charts -->
+                <div class="right-panel">
+                    <div class="charts-container">
+                        <!-- Intraday Bar Chart -->
+                        <div class="chart-card">
+                            <h3>📊 Today’s Real-Time Price  Chart</h3>
+                            <canvas id="intradayChart"></canvas>
+                        </div>
+                        
+                        <!-- Historical + Forecast Chart -->
+                        <div class="chart-card">
+                            <h3>📈 Quarterly Data </h3>
+                            <canvas id="stockChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="watchlist-section">
+                <div class="watchlist-header">
+                    <h3>⭐ Watchlist</h3>
+                    <div class="watchlist-controls-row">
+                        <input type="text" id="watchlistSymbol" placeholder="Enter company symbol to add" list="stockList" value="TCS.NS">
+                        <button onclick="addToWatchlist()">➕ Add to Watchlist</button>
+                    
+                    </div>
+                </div>
+                <div class="watchlist-table-wrapper">
+                    <table class="watchlist-table">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Date</th>
+                                <th>Stock Price</th>
+                                <th>Prediction Day 1</th>
+                                <th>Prediction Day 2</th>
+                                <th>Prediction Day 3</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlistBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            
+
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>Current Price</h3>
+                    <p id="currentPrice">₹ --</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Data Points</h3>
+                    <p id="dataPoints">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Data Source</h3>
+                    <p id="dataSource">--</p>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let intradayChart = null;
+        let autoRefreshInterval = null;
+        let realTimeMode = false;
+
+        // Load all available stocks on page load
+        function loadAvailableStocks() {
+            fetch('/available_stocks')
+                .then(res => res.json())
+                .then(data => {
+                    const datalist = document.getElementById('stockList');
+                    datalist.innerHTML = '';
+                    data.available_stocks.forEach(stock => {
+                        const option = document.createElement('option');
+                        option.value = stock.symbol;
+                        datalist.appendChild(option);
+                    });
+                    console.log(`✅ Loaded ${data.count} stocks`);
+                })
+                .catch(err => console.error('Error loading stocks:', err));
+        }
+
+        function showMessage(msg, isError = false) {
+            const infoBox = document.getElementById('infoBox');
+            infoBox.innerHTML = msg;
+            infoBox.style.display = 'block';
+            infoBox.className = isError ? 'info-box error' : 'info-box';
+        }
+
+        function updateDetailCards(data, intradayData) {
+            const currentTime = new Date().toLocaleString();
+            const addedToWatchlist = document.getElementById('detailWatchlist').textContent === 'Active';
+
+            document.getElementById('detailCorporateName').textContent = data.corporate_name;
+            document.getElementById('detailCurrentPrice').textContent = `₹ ${data.current_price.toFixed(2)}`;
+            document.getElementById('detailDateTime').textContent = currentTime;
+            document.getElementById('detailWatchlist').textContent = addedToWatchlist ? 'Active' : 'Inactive';
+            document.getElementById('companyTimestamp').textContent = `Date/Time: ${currentTime}`;
+            document.getElementById('corporateName').textContent = data.corporate_name;
+            document.getElementById('watchlistStatus').textContent = addedToWatchlist ? 'Watchlist: Added' : 'Watchlist: Not added';
+        }
+
+        function fetchData(useWishlist = false) {
+            const symbol = document.getElementById('stockSymbol').value || 'TCS.NS';
+            showMessage('⏳ Loading data...');
+
+            Promise.all([
+                fetch(`/data?corporate_name=${encodeURIComponent(symbol)}${useWishlist ? '&wishlist=true' : ''}`).then(r => r.json()),
+                fetch(`/intraday?corporate_name=${encodeURIComponent(symbol)}`).then(r => r.json())
+            ])
+            .then(([data, intradayData]) => {
+                if (data.error) {
+                    showMessage(`❌ Error: ${data.error}`, true);
+                    return;
+                }
+
+                updateDetailCards(data, intradayData);
+
+                // Update bottom stats
+                document.getElementById('currentPrice').textContent = `₹ ${data.current_price.toFixed(2)}`;
+                document.getElementById('dataPoints').textContent = data.data_points || data.past_dates.length;
+                document.getElementById('dataSource').textContent = data.data_source === 'live' ? '📡 Live' : data.data_source === 'wishlist' ? '⚡ Wishlist' : '📊 Sample';
+
+                showMessage(`✅ Loaded ${data.corporate_name} | ${data.data_points || data.past_dates.length} data points`);
+
+                // Intraday bar chart
+                if (intradayData && !intradayData.error && intradayData.intraday_prices.length > 0) {
+                    const ctx = document.getElementById('intradayChart').getContext('2d');
+                    if (intradayChart) intradayChart.destroy();
+
+                    const intradayPrices = intradayData.intraday_prices.map(v => Number(v));
+                    const minPrice = Math.min(...intradayPrices);
+                    const maxPrice = Math.max(...intradayPrices);
+                    const priceChange = intradayPrices[intradayPrices.length - 1] - intradayPrices[0];
+                    const priceChangePercent = ((priceChange / intradayPrices[0]) * 100).toFixed(2);
+                    const color = priceChange >= 0 ? '#22c55e' : '#ff6b6b';
+
+                    intradayChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: intradayData.intraday_dates,
+                            datasets: [{
+                                label: `Today's Price (₹) ${priceChange >= 0 ? '📈' : '📉'} ${priceChangePercent}%`,
+                                data: intradayPrices,
+                                backgroundColor: intradayPrices.map(() => color + 'bb'),
+                                borderColor: color,
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { display: true, position: 'top' }
+                            },
+                            scales: {
+                                y: { title: { display: true, text: 'Price (₹)' }, min: minPrice * 0.98, max: maxPrice * 1.02 },
+                                x: { title: { display: true, text: 'Time (Today)' } }
+                            }
+                        }
+                    });
+                }
+
+                // Historical + forecast line chart
+                const ctx2 = document.getElementById('stockChart').getContext('2d');
+                if (chart) chart.destroy();
+                const pastPrices = data.past_prices.map(v => Number(v));
+                const futurePricesChart = data.future_prices.map(v => Number(v));
+
+                chart = new Chart(ctx2, {
+                    type: 'line',
+                    data: {
+                        labels: data.past_dates.concat(data.future_dates),
+                        datasets: [
+                            {
+                                label: 'Historical Price (₹)',
+                                data: pastPrices.concat(new Array(data.future_dates.length).fill(null)),
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                                tension: 0.3,
+                                fill: true,
+                                borderWidth: 2
+                            },
+                            {
+                                label: 'Predicted Price (₹)',
+                                data: new Array(pastPrices.length).fill(null).concat(futurePricesChart),
+                                borderColor: '#ff6b6b',
+                                borderDash: [5, 5],
+                                tension: 0.3,
+                                fill: false,
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: true, position: 'top' }
+                        },
+                        scales: {
+                            y: { title: { display: true, text: 'Price (₹)' } }
+                        }
+                    }
+                });
+            })
+            .catch(err => showMessage(`❌ Error: ${err.message}`, true));
+        }
+
+        function toggleAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                showMessage('⏸️ Auto-refresh stopped');
+            } else {
+                fetchData(realTimeMode);
+                autoRefreshInterval = setInterval(() => fetchData(realTimeMode), 30000);
+                showMessage('⏯️ Auto-refresh started (30s interval)');
+            }
+        }
+
+        function toggleRealTimeMode(event) {
+            realTimeMode = !realTimeMode;
+            const button = event.currentTarget;
+            button.textContent = realTimeMode ? '⚡ Realtime ON' : '⚡ Real-Time Mode';
+            fetchData(realTimeMode);
+        }
+
+        function addToWatchlist() {
+            const symbol = document.getElementById('watchlistSymbol').value || 'TCS.NS';
+            fetch('/watchlist/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ corporate_name: symbol })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showMessage(`✅ ${data.message}`);
+                    document.getElementById('detailWatchlist').textContent = 'Active';
+                    document.getElementById('watchlistStatus').textContent = 'Watchlist: Added';
+                    loadWatchlist();
+                } else {
+                    showMessage(`❌ ${data.message}`, true);
+                }
+            })
+            .catch(err => showMessage(`❌ Error: ${err.message}`, true));
+        }
+
+        function loadWatchlist() {
+            fetch('/watchlist/list')
+                .then(res => res.json())
+                .then(data => {
+                    const body = document.getElementById('watchlistBody');
+                    body.innerHTML = '';
+                    data.watchlist.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.corporate_name}</td>
+                            <td>${new Date(item.data_time).toLocaleString()}</td>
+                            <td>₹ ${Number(item.current_price).toFixed(2)}</td>
+                            <td>₹ ${Number(item.prediction_day1).toFixed(2)}</td>
+                            <td>₹ ${Number(item.prediction_day2).toFixed(2)}</td>
+                            <td>₹ ${Number(item.prediction_day3).toFixed(2)}</td>
+                        `;
+                        body.appendChild(row);
+                    });
+                })
+                .catch(err => console.error('Error loading watchlist:', err));
+        }
+
+        function startWishlist() {
+            const symbol = document.getElementById('stockSymbol').value || 'TCS.NS';
+            fetch('/wishlist/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ corporate_name: symbol, interval: 5 })
+            })
+            .then(res => res.json())
+            .then(data => showMessage(data.message || '✅ Wishlist change started'))
+            .catch(err => showMessage(`❌ Error: ${err.message}`, true));
+        }
+
+        function stopWishlist() {
+            fetch('/wishlist/stop', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => showMessage(data.message || '✅ Wishlist change stopped'))
+                .catch(err => showMessage(`❌ Error: ${err.message}`, true));
+        }
+
+        function fetchWishlistStatus() {
+            fetch('/wishlist/status')
+                .then(res => res.json())
+                .then(data => {
+                    const statusInd = document.getElementById('statusIndicator');
+                    const statusText = document.getElementById('statusText');
+                    if (data.is_running) {
+                        statusInd.classList.add('active');
+                        statusText.textContent = 'Active';
+                        showMessage(`✅ Wishlist change is running | Tracking: ${data.active_symbols.join(', ')}`);
+                    } else {
+                        statusInd.classList.remove('active');
+                        statusText.textContent = 'Inactive';
+                        showMessage('⏹️ Wishlist change is not running');
+                    }
+                })
+                .catch(err => showMessage(`❌ Error: ${err.message}`, true));
+        }
+
+        function showStats() {
+            fetch('/stats')
+                .then(res => res.json())
+                .then(data => {
+                    const corps = data.corporate_names_tracked.join(', ') || 'None';
+                    showMessage(`📊 Database Stats | Total Records: ${data.total_records} | Tracked: ${corps}`);
+                })
+                .catch(err => showMessage(`❌ Error: ${err.message}`, true));
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ Are you sure you want to clear all data from the database?')) return;
+            fetch('/clear_data', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => showMessage(data.message || '✅ Data cleared'))
+                .catch(err => showMessage(`❌ Error: ${err.message}`, true));
+        }
+
+        // Load initial data
+        loadAvailableStocks();
+        loadWatchlist();
+        fetchData();
+    </script>
+</body>
+</html>

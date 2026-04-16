@@ -1,0 +1,2 @@
+total_records,unique_stocks,min_price,max_price,mean_price,median_price,min_volume,max_volume,mean_volume,mean_prediction_error
+2550,83,97.39695242489748,5169.076953431134,2523.0868330912717,2497.291697454306,106967,9999792,5044395.649803922,126.44229474659801
